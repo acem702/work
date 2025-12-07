@@ -6,8 +6,14 @@
 <div x-data="accountPage()" class="space-y-6">
     
     <!-- Page Title -->
-    <div>
+    <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold text-gray-900">My Account</h1>
+
+        <a href="{{ route('dashboard') }}" 
+        class="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl text-white text-sm font-bold shadow-lg hover:shadow-xl transition">
+            <i class="fas fa-arrow-left"></i>
+            <span>Dashboard</span>
+        </a>
     </div>
 
     <!-- Orange Divider Line -->
@@ -20,7 +26,7 @@
             {{ number_format(auth()->user()->point_balance, 2) }} 
             <span class="text-base">(USD)</span>
         </p>
-        <button href="{{ route(name: 'recharge') }}" class="w-full max-w-xs mx-auto gradient-button text-white py-3 px-6 rounded-xl font-bold text-sm shadow-lg">
+        <button onclick="window.location='{{ route(name: 'recharge') }}'" class="w-full max-w-xs mx-auto gradient-button text-white py-3 px-6 rounded-xl font-bold text-sm shadow-lg">
             Recharge
         </button>
     </div>

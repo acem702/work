@@ -6,8 +6,14 @@
 <div x-data="transactionPage()" class="space-y-4">
     
     <!-- Page Title -->
-    <div>
+    <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold text-gray-900">Bonus History</h1>
+
+        <a href="{{ route('dashboard') }}" 
+        class="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl text-white text-sm font-bold shadow-lg hover:shadow-xl transition">
+            <i class="fas fa-arrow-left"></i>
+            <span>Dashboard</span>
+        </a>
     </div>
 
     <!-- Orange Divider Line -->

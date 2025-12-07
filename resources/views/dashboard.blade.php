@@ -120,7 +120,7 @@
         <h2 class="text-2xl font-bold text-gray-900 mb-4">Asset</h2>
 
         <!-- Access Card -->
-        <div class="bg-white rounded-2xl shadow-lg p-6 mb-4 text-center border border-gray-100">
+        <div onclick="window.location='{{ route('tasks.index') }}'" class="bg-white rounded-2xl shadow-lg p-6 mb-4 text-center border border-gray-100">
             <div class="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <i class="fas fa-user-plus text-white text-2xl"></i>
             </div>
@@ -130,7 +130,7 @@
         </div>
 
         <!-- Recharge Card -->
-        <div class="bg-white rounded-2xl shadow-lg p-6 mb-4 text-center border border-gray-100">
+        <div onclick="window.location='{{ route(name: 'recharge') }}'" class="bg-white rounded-2xl shadow-lg p-6 mb-4 text-center border border-gray-100">
             <div class="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <i class="fas fa-shopping-cart text-white text-2xl"></i>
             </div>
@@ -140,7 +140,7 @@
         </div>
 
         <!-- Withdrawal Card -->
-        <div class="bg-white rounded-2xl shadow-lg p-6 mb-4 text-center border border-gray-100">
+        <div onclick="window.location='{{ route(name: 'withdrawals.index') }}'" class="bg-white rounded-2xl shadow-lg p-6 mb-4 text-center border border-gray-100">
             <div class="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <i class="fas fa-wallet text-white text-2xl"></i>
             </div>
@@ -155,7 +155,7 @@
         <h2 class="text-2xl font-bold text-gray-900 mb-4">Profile</h2>
 
         <!-- Transaction History Card -->
-        <div class="bg-white rounded-2xl shadow-lg p-6 mb-4 text-center border border-gray-100">
+        <div onclick="window.location='{{ route('transactions.index') }}'" class="bg-white rounded-2xl shadow-lg p-6 mb-4 text-center border border-gray-100">
             <div class="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <i class="fas fa-file-invoice text-white text-2xl"></i>
             </div>
@@ -165,7 +165,7 @@
         </div>
 
         <!-- My Account Card -->
-        <div class="bg-white rounded-2xl shadow-lg p-6 mb-4 text-center border border-gray-100">
+        <div onclick="window.location='{{ route(name: 'account.index') }}'" class="bg-white rounded-2xl shadow-lg p-6 mb-4 text-center border border-gray-100">
             <div class="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <i class="fas fa-key text-white text-2xl"></i>
             </div>
@@ -175,7 +175,7 @@
         </div>
 
         <!-- Referral Code Card -->
-        <div class="bg-white rounded-2xl shadow-lg p-6 mb-4 text-center border border-gray-100">
+        <div onclick="window.location='{{ route('referrals.index') }}'" class="bg-white rounded-2xl shadow-lg p-6 mb-4 text-center border border-gray-100">
             <div class="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <i class="fas fa-users text-white text-2xl"></i>
             </div>
@@ -190,7 +190,7 @@
         <h2 class="text-2xl font-bold text-gray-900 mb-4">History</h2>
 
         <!-- Orders Card -->
-        <div class="bg-white rounded-2xl shadow-lg p-6 mb-4 text-center border border-gray-100">
+        <div onclick="window.location='{{ route('tasks.orders') }}'" class="bg-white rounded-2xl shadow-lg p-6 mb-4 text-center border border-gray-100">
             <div class="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <i class="fas fa-box text-white text-2xl"></i>
             </div>
@@ -200,7 +200,7 @@
         </div>
 
         <!-- Funds Card -->
-        <div class="bg-white rounded-2xl shadow-lg p-6 mb-4 text-center border border-gray-100">
+        <div onclick="window.location='{{ route('transactions.index') }}'" class="bg-white rounded-2xl shadow-lg p-6 mb-4 text-center border border-gray-100">
             <div class="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <i class="fas fa-file-invoice-dollar text-white text-2xl"></i>
             </div>
@@ -210,7 +210,7 @@
         </div>
 
         <!-- Bind Wallet Address Card -->
-        <div class="bg-white rounded-2xl shadow-lg p-6 mb-4 text-center border border-gray-100">
+        <div onclick="window.location='{{ route(name: 'withdrawal-method.index') }}'" class="bg-white rounded-2xl shadow-lg p-6 mb-4 text-center border border-gray-100">
             <div class="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <i class="fas fa-link text-white text-2xl"></i>
             </div>

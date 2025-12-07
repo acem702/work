@@ -140,13 +140,13 @@
                 <!-- Referral Code (Optional) -->
                 <div>
                     <label for="referral_code" class="block text-white text-xs font-medium mb-2">
-                        Referral Code <span class="text-gray-400">(Optional)</span>
+                        Referral Code <span class="text-red-400">*</span>
                     </label>
                     <input type="text" 
                         id="referral_code" 
                         name="referral_code" 
                         value="{{ old('referral_code') }}"
-                        placeholder="Enter referral code (if any)"
+                        placeholder="Enter referral code"
                         class="block w-full px-3 py-2.5 bg-white bg-opacity-90 border-0 rounded-xl text-gray-900 placeholder-gray-500 text-sm focus:ring-2 focus:ring-orange-500 focus:bg-white transition">
                     @error('referral_code')
                         <p class="text-red-300 text-xs mt-1">{{ $message }}</p>

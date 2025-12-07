@@ -83,7 +83,7 @@ class RegisterController extends Controller
                 'regex:/^[0-9]{6}$/'
             ],
             'referral_code' => [
-                'nullable',
+                'required',
                 'string',
                 'max:50',
                 'exists:users,referral_code' // Check if referral code exists

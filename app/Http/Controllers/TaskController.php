@@ -22,8 +22,12 @@ class TaskController extends Controller
     {
         $user = auth()->user();
         
-        $pendingTask = $user->tasks()->pending()->with('product')->first();
-        $taskQueue = $user->taskQueues()->queued()->ordered()->with('product')->get();
+        $pendingTask = $user->tasks()->pending()->with('product', 'comboTask')->first();
+        $taskQueue = $user->taskQueues()
+            ->queued()
+            ->ordered()
+            ->with(['product', 'comboTask.items.product'])
+            ->get();
         $completedTasks = $user->tasks()->completed()->with('product')->latest()->paginate(10);
         
         $stats = [
@@ -45,9 +49,16 @@ class TaskController extends Controller
             $user = auth()->user();
             $taskQueue = $this->taskService->getNextTask($user);
 
+            // Load appropriate relations based on task type
+            if ($taskQueue->is_combo) {
+                $taskQueue->load('comboTask.items.product.minMembershipTier');
+            } else {
+                $taskQueue->load('product.minMembershipTier');
+            }
+
             return response()->json([
                 'success' => true,
-                'task_queue' => $taskQueue->load('product.minMembershipTier'),
+                'task_queue' => $taskQueue,
             ]);
         } catch (Exception $e) {
             return response()->json([
@@ -72,10 +83,13 @@ class TaskController extends Controller
             
             $task = $this->taskService->startTask($user, $taskQueue);
 
+            // Load product relation
+            $task->load('product', 'comboTask');
+
             return response()->json([
                 'success' => true,
                 'message' => 'Task started successfully. Points locked.',
-                'task' => $task->load('product'),
+                'task' => $task,
             ]);
         } catch (Exception $e) {
             return response()->json([
@@ -99,7 +113,7 @@ class TaskController extends Controller
             $task = $user->tasks()->findOrFail($request->task_id);
             
             // Check if task can be submitted
-            if (!$task->canBeSubmitted()) {
+            if (!$this->taskService->canSubmitTask($task)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Insufficient balance to submit task. Please contact admin for top-up. Current balance: ' . number_format($user->point_balance, 2),
@@ -108,12 +122,31 @@ class TaskController extends Controller
             
             $completedTask = $this->taskService->completeTask($task);
 
-            return response()->json([
+            // Check if this was a combo task and if there's a next task created
+            $nextComboTask = null;
+            if ($completedTask->combo_task_id && $completedTask->next_combo_task_id) {
+                $nextComboTask = \App\Models\Task::find($completedTask->next_combo_task_id);
+            }
+
+            $response = [
                 'success' => true,
                 'message' => 'Task completed successfully!',
                 'task' => $completedTask,
                 'new_balance' => $user->fresh()->point_balance,
-            ]);
+            ];
+
+            // If there's a next combo task and user is in deficit, add a warning
+            if ($nextComboTask && $user->fresh()->point_balance < 0) {
+                $response['has_next_combo_task'] = true;
+                $response['next_task_pending'] = true;
+                $response['message'] = 'Task completed! Next combo task auto-started but insufficient balance. Please contact admin for top-up.';
+            } elseif ($nextComboTask) {
+                $response['has_next_combo_task'] = true;
+                $response['next_task_pending'] = false;
+                $response['message'] = 'Task completed! Next combo task is ready to submit.';
+            }
+
+            return response()->json($response);
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,
@@ -190,31 +223,49 @@ class TaskController extends Controller
         $user = auth()->user();
         
         $tasks = $user->tasks()
-            ->with(['product.minMembershipTier'])
+            ->with(['product.minMembershipTier', 'comboTask'])
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($task) use ($user) {
-                $product = $task->product;
-                $commission = $task->status === 'completed' 
-                    ? $task->commission_earned 
-                    : $product->calculateCommission($user);
-                
-                // Calculate task progress (completed tasks / total limit)
-                $completedToday = $user->tasks_completed_today;
-                $dailyLimit = $user->membershipTier->daily_task_limit;
-                
-                return [
-                    'id' => $task->id,
-                    'product_name' => $product->name,
-                    'product_image' => $product->image_url,
-                    'total_amount' => number_format($product->base_points, 2),
-                    'commission' => number_format($commission, 2),
-                    'task_progress' => $completedToday . '/' . $dailyLimit,
-                    'status' => $task->status,
-                    'status_label' => ucfirst($task->status),
-                    'created_at' => $task->created_at->format('Y-m-d H:i:s'),
-                    'can_submit' => $task->status === 'pending' && $task->canBeSubmitted(),
-                ];
+                // Handle combo tasks vs regular tasks
+                if ($task->combo_task_id) {
+                    $product = $task->product;
+                    $comboTask = $task->comboTask;
+                    
+                    return [
+                        'id' => $task->id,
+                        'product_name' => $product->name . " (Combo: {$comboTask->name} - Step {$task->combo_sequence})",
+                        'product_image' => $product->image_url ?? null,
+                        'total_amount' => number_format($product->base_points, 2),
+                        'commission' => number_format($task->commission_earned ?? 0, 2),
+                        'task_progress' => $user->tasks_completed_today . '/' . $user->membershipTier->daily_task_limit,
+                        'status' => $task->status,
+                        'status_label' => ucfirst($task->status),
+                        'created_at' => $task->created_at->format('Y-m-d H:i:s'),
+                        'can_submit' => $task->status === 'pending' && $this->taskService->canSubmitTask($task),
+                        'is_combo' => true,
+                        'combo_sequence' => $task->combo_sequence,
+                    ];
+                } else {
+                    $product = $task->product;
+                    $commission = $task->status === 'completed' 
+                        ? $task->commission_earned 
+                        : $product->calculateCommission($user);
+                    
+                    return [
+                        'id' => $task->id,
+                        'product_name' => $product->name,
+                        'product_image' => $product->image_url ?? null,
+                        'total_amount' => number_format($product->base_points, 2),
+                        'commission' => number_format($commission, 2),
+                        'task_progress' => $user->tasks_completed_today . '/' . $user->membershipTier->daily_task_limit,
+                        'status' => $task->status,
+                        'status_label' => ucfirst($task->status),
+                        'created_at' => $task->created_at->format('Y-m-d H:i:s'),
+                        'can_submit' => $task->status === 'pending' && $this->taskService->canSubmitTask($task),
+                        'is_combo' => false,
+                    ];
+                }
             });
         
         return response()->json([

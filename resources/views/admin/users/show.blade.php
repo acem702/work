@@ -117,23 +117,46 @@
                 <h2 class="text-lg font-semibold text-gray-900">Task Queue</h2>
                 <a href="{{ route('admin.task-queue.user.queue', $user) }}" class="text-sm text-primary hover:text-primary/80">View All</a>
             </div>
-            <div class="space-y-3">
-                @forelse($user->taskQueues->take(5) as $taskQueue)
-                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div class="flex-1">
-                            <p class="text-sm font-medium text-gray-900">{{ $taskQueue->product->name }}</p>
-                            <p class="text-xs text-gray-500 mt-1">
-                                Points: {{ number_format($taskQueue->product->base_points) }} | 
-                                Commission: {{ number_format($taskQueue->product->calculateCommission($user)) }}
-                            </p>
+            <!-- Task Queue Section - Replace the existing section -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold text-gray-900">Task Queue</h2>
+                    <a href="{{ route('admin.task-queue.user.queue', $user) }}" class="text-sm text-primary hover:text-primary/80">View All</a>
+                </div>
+                <div class="space-y-3">
+                    @forelse($user->taskQueues->take(5) as $taskQueue)
+                        <div class="flex items-center justify-between p-3 {{ $taskQueue->is_combo ? 'bg-purple-50 border-2 border-purple-200' : 'bg-gray-50' }} rounded-lg">
+                            <div class="flex-1">
+                                @if($taskQueue->is_combo)
+                                    <!-- Combo Task -->
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <i class="fas fa-layer-group text-purple-600 text-sm"></i>
+                                        <p class="text-sm font-medium text-gray-900">{{ $taskQueue->comboTask->name }}</p>
+                                        <span class="px-2 py-0.5 bg-purple-600 text-white text-xs font-semibold rounded-full">
+                                            {{ $taskQueue->comboTask->sequence_count }} Tasks
+                                        </span>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1">
+                                        Total Points: {{ number_format($taskQueue->comboTask->total_base_points) }} | 
+                                        Total Commission: {{ number_format($taskQueue->comboTask->items->sum(fn($i) => $i->product->base_commission)) }}
+                                    </p>
+                                @else
+                                    <!-- Regular Product -->
+                                    <p class="text-sm font-medium text-gray-900">{{ $taskQueue->product->name }}</p>
+                                    <p class="text-xs text-gray-500 mt-1">
+                                        Points: {{ number_format($taskQueue->product->base_points) }} | 
+                                        Commission: {{ number_format($taskQueue->product->calculateCommission($user)) }}
+                                    </p>
+                                @endif
+                            </div>
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full {{ status_badge_color($taskQueue->status) }}">
+                                {{ ucfirst($taskQueue->status) }}
+                            </span>
                         </div>
-                        <span class="px-2 py-1 text-xs font-semibold rounded-full {{ status_badge_color($taskQueue->status) }}">
-                            {{ ucfirst($taskQueue->status) }}
-                        </span>
-                    </div>
-                @empty
-                    <p class="text-gray-500 text-center py-4">No tasks in queue</p>
-                @endforelse
+                    @empty
+                        <p class="text-gray-500 text-center py-4">No tasks in queue</p>
+                    @endforelse
+                </div>
             </div>
         </div>
 

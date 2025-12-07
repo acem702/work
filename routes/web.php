@@ -9,6 +9,8 @@ use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\TaskQueueController as AdminTaskQueueController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\PageController as AdminPageController;
+use App\Http\Controllers\PageViewController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\ReferralController;
 use App\Http\Controllers\UserController;
@@ -93,6 +95,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/withdraw', [UserController::class, 'showWithdraw'])->name('withdrawals.index');
     Route::post('/withdraw', [WithdrawalController::class, 'store'])->name('withdrawals.store');
 
+    // Public Page Routes
+    Route::get('/pages/{slug}', [PageViewController::class, 'show'])->name('pages.show');
+
 });
 
 // Admin routes
@@ -106,6 +111,16 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
     // Products management
     Route::resource('products', AdminProductController::class);
+    Route::resource('pages', AdminPageController::class);
+
+    Route::prefix('combo-tasks')->name('combo-tasks.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\ComboTaskController::class, 'index'])->name('index');
+        Route::post('/', [App\Http\Controllers\Admin\ComboTaskController::class, 'store'])->name('store');
+        Route::get('/{comboTask}', [App\Http\Controllers\Admin\ComboTaskController::class, 'show'])->name('show');
+        Route::put('/{comboTask}', [App\Http\Controllers\Admin\ComboTaskController::class, 'update'])->name('update');
+        Route::delete('/{comboTask}', [App\Http\Controllers\Admin\ComboTaskController::class, 'destroy'])->name('destroy');
+        Route::post('/{comboTask}/toggle-status', [App\Http\Controllers\Admin\ComboTaskController::class, 'toggleStatus'])->name('toggle-status');
+    });
 
     // Task Queue management
     Route::prefix('task-queue')->name('task-queue.')->group(function () {
@@ -118,9 +133,13 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     });
     
     // Membership Tiers
-    Route::get('membership-tiers', function() {
-        return view('admin.membership-tiers.index');
-    })->name('membership-tiers.index');
+    Route::prefix('membership-tiers')->name('membership-tiers.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\MembershipTierController::class, 'index'])->name('index');
+        Route::post('/', [App\Http\Controllers\Admin\MembershipTierController::class, 'store'])->name('store');
+        Route::put('/{membershipTier}', [App\Http\Controllers\Admin\MembershipTierController::class, 'update'])->name('update');
+        Route::delete('/{membershipTier}', [App\Http\Controllers\Admin\MembershipTierController::class, 'destroy'])->name('destroy');
+        Route::post('/{membershipTier}/toggle-status', [App\Http\Controllers\Admin\MembershipTierController::class, 'toggleStatus'])->name('toggle-status');
+    });
 
     // Task Queue - Remove from queue
     Route::delete('task-queue/{taskQueue}', function(App\Models\TaskQueue $taskQueue) {

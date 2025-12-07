@@ -6,8 +6,14 @@
 <div class="space-y-6">
     
     <!-- Page Title -->
-    <div>
+    <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold text-gray-900">Recharge</h1>
+
+        <a href="{{ route('dashboard') }}" 
+        class="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl text-white text-sm font-bold shadow-lg hover:shadow-xl transition">
+            <i class="fas fa-arrow-left"></i>
+            <span>Dashboard</span>
+        </a>
     </div>
 
     <!-- Orange Divider Line -->
@@ -15,11 +21,15 @@
 
     <!-- Instructions -->
     <div class="bg-white rounded-2xl shadow-lg p-5 border border-gray-100">
-        <p class="text-xs text-gray-600 mb-3">
-            1. Please proceed with initiating the withdrawal process upon completion of all your daily orders.
+        <h2 class="text-lg font-bold text-gray-900 mb-3">How can we help?</h2>
+        <p class="text-xs text-gray-600">
+            Our dedicated team is available to answer all your questions.
         </p>
         <p class="text-xs text-gray-600">
-            2. Our system algorithm ensures that the distribution of all products is conducted in a completely randomized manner, offering an equitable and unbiased process.
+            Everyday, 10:00 to 22:00.
+        </p>
+        <p class="text-xs text-gray-600">
+            If you get in touch outside of these hours we will aim to respond to you as quickly as possible the next working day.
         </p>
     </div>
 
@@ -30,65 +40,24 @@
             Recharge Now
         </button>
     </div>
-
-    
-    <!-- Customer Service Popup Component -->
-    <div x-show="showCsPopup" 
-         x-cloak
-         class="fixed inset-0 z-50 flex items-center justify-center px-4 py-4"
-         style="background: rgba(0, 0, 0, 0.7);">
-        
-        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden"
-             x-transition:enter="transition ease-out duration-3000"
-             x-transition:enter-start="opacity-0 transform translate-y-full"
-             x-transition:enter-end="opacity-100 transform translate-y-0"
-             x-transition:leave="transition ease-in duration-200"
-             x-transition:leave-start="opacity-100 transform translate-y-0"
-             x-transition:leave-end="opacity-0 transform translate-y-full">
-            
-            <!-- Customer Service Options -->
-            <div class="divide-y divide-gray-100">
-                <!-- Online Customer Service -->
-                <a href="#" 
-                   class="flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition group">
-                    <div class="flex items-center space-x-4">
-                        <div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center">
-                            <i class="fas fa-headset text-orange-500 text-xl"></i>
-                        </div>
-                        <span class="text-gray-900 font-medium text-base">Online Customer Service</span>
-                    </div>
-                    <svg class="w-6 h-6 text-gray-400 group-hover:text-orange-500 transition" 
-                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                    </svg>
-                </a>
-
-                <!-- Telegram CS -->
-                <a href="#" 
-                   class="flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition group">
-                    <div class="flex items-center space-x-4">
-                        <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                            <i class="fab fa-telegram-plane text-blue-500 text-xl"></i>
-                        </div>
-                        <span class="text-gray-900 font-medium text-base">Telegram CS</span>
-                    </div>
-                    <svg class="w-6 h-6 text-gray-400 group-hover:text-blue-500 transition" 
-                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                    </svg>
-                </a>
-            </div>
-
-            <!-- Cancel Button -->
-            <div class="p-4 bg-gray-50">
-                <button @click="showCsPopup = false" 
-                        class="w-full py-2 text-orange-500 font-semibold text-base hover:bg-white rounded-xl transition">
-                    Cancel
-                </button>
-            </div>
-        </div>
+    <div class="bg-white rounded-2xl shadow-lg p-5 border border-gray-100 text-center">
+        <p class="text-xs text-gray-600 mb-3">
+            Recharge remark:
+        </p>
+        <p class="text-xs text-gray-600">
+            1. Receiving account: Account Funds​
+        </p>
+        <p class="text-xs text-gray-600">
+            2. The deposit will be credited and available for trading once you receive confirmation from customer support.​
+        </p>
+        <p class="text-xs text-gray-600">
+            3. Please make sure your selected coins and network are correct before sending any funds to the deposit address provided by customer support. Sending funds over an incorrect network or in different coins will result in the loss of your assets, which cannot be retrieved.​
+        </p>
+        <p class="text-xs text-gray-600">
+            4. Please contact our customer service to request the latest deposit address.
+        </p>
     </div>
-
+    @include('partials.customer-service-popup')
 </div>
 @endsection
 

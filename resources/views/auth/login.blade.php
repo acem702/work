@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="flex items-center justify-center min-h-[calc(100vh-12rem)]">
-    <div class="w-full max-w-md">
+    <div class="w-full max-w-md" x-data="loginPage()">
         
         <!-- Welcome Section -->
         <div class="text-center mb-6 text-black">
@@ -17,22 +17,28 @@
             <h2 class="text-base font-bold text-white mb-6">Member Login</h2>
 
             <!-- Login Form -->
-            <form method="POST" action="{{ route('login') }}" class="space-y-4" x-data="{ submitting: false }" @submit="submitting = true; showLoading('Signing in...')">
+            <form method="POST" 
+                  action="{{ route('login') }}" 
+                  class="space-y-4" 
+                  @submit="handleSubmit">
                 @csrf
 
                 <!-- Username/Phone -->
                 <div>
-                    <label for="email" class="block text-white text-xs font-medium mb-2">
+                    <label for="name" class="block text-white text-xs font-medium mb-2">
                         Username/Phone
                     </label>
                     <input type="text" 
                         id="name" 
                         name="name" 
-                        value="{{ old('email') }}"
+                        value="{{ old('name') }}"
                         required 
                         autofocus
                         placeholder="Username/Phone"
                         class="block w-full px-3 py-2.5 bg-white bg-opacity-90 border-0 rounded-xl text-gray-900 placeholder-gray-500 text-sm focus:ring-2 focus:ring-orange-500 focus:bg-white transition">
+                    @error('name')
+                        <p class="text-red-300 text-xs mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <!-- Password -->
@@ -40,17 +46,29 @@
                     <label for="password" class="block text-white text-xs font-medium mb-2">
                         Password
                     </label>
-                    <input type="password" 
-                        id="password" 
-                        name="password" 
-                        required
-                        placeholder="Password"
-                        class="block w-full px-3 py-2.5 bg-white bg-opacity-90 border-0 rounded-xl text-gray-900 placeholder-gray-500 text-sm focus:ring-2 focus:ring-orange-500 focus:bg-white transition">
+                    <div class="relative">
+                        <input :type="showPassword ? 'text' : 'password'" 
+                            id="password" 
+                            name="password" 
+                            required
+                            placeholder="Password"
+                            class="block w-full px-3 py-2.5 pr-10 bg-white bg-opacity-90 border-0 rounded-xl text-gray-900 placeholder-gray-500 text-sm focus:ring-2 focus:ring-orange-500 focus:bg-white transition">
+                        <button type="button" 
+                                @click="showPassword = !showPassword"
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none">
+                            <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'" class="text-sm"></i>
+                        </button>
+                    </div>
+                    @error('password')
+                        <p class="text-red-300 text-xs mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <!-- Forgot Password -->
                 <div class="text-right">
-                    <a @click="showCsPopup = true;" class="text-white text-xs underline hover:text-gray-200 transition">
+                    <a @click.prevent="showCsPopup = true" 
+                       href="#"
+                       class="text-white text-xs underline hover:text-gray-200 transition cursor-pointer">
                         Forgot Password?
                     </a>
                 </div>
@@ -58,103 +76,44 @@
                 <!-- Submit Button -->
                 <button type="submit"
                         :disabled="submitting"
-                        class="w-full gradient-button text-white py-2.5 px-6 rounded-xl font-bold text-sm shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
+                        :class="submitting ? 'opacity-50 cursor-not-allowed' : ''"
+                        class="w-full gradient-button text-white py-2.5 px-6 rounded-xl font-bold text-sm shadow-lg transition">
                     <span x-show="!submitting">LOGIN</span>
                     <span x-show="submitting" x-cloak>
-                        <i class="fas fa-spinner fa-spin mr-2"></i>loading...
+                        <i class="fas fa-spinner fa-spin mr-2"></i>Logging in...
                     </span>
                 </button>
 
                 <!-- Create Account Link -->
                 <div class="text-center">
                     <p class="text-gray-300 text-xs">
-                        Don't have an account?<a href="{{ route(name: 'register') }}" class="text-white underline ml-1 hover:text-gray-200 transition">Create an account</a>
+                        Don't have an account? 
+                        <a href="{{ route('register') }}" class="text-white underline ml-1 hover:text-gray-200 transition">
+                            Create an account
+                        </a>
                     </p>
                 </div>
             </form>
         </div>
-    </div>
-    
-    <!-- Customer Service Popup Component -->
-    <div x-show="showCsPopup" 
-         x-cloak
-         class="fixed inset-0 z-50 flex items-center justify-center px-4 py-4"
-         style="background: rgba(0, 0, 0, 0.7);">
-        
-        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden"
-             x-transition:enter="transition ease-out duration-300"
-             x-transition:enter-start="opacity-0 transform translate-y-full"
-             x-transition:enter-end="opacity-100 transform translate-y-0"
-             x-transition:leave="transition ease-in duration-200"
-             x-transition:leave-start="opacity-100 transform translate-y-0"
-             x-transition:leave-end="opacity-0 transform translate-y-full">
-            
-            <!-- Customer Service Options -->
-            <div class="divide-y divide-gray-100">
-                <!-- Online Customer Service -->
-                <a href="#" 
-                   class="flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition group">
-                    <div class="flex items-center space-x-4">
-                        <div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center">
-                            <i class="fas fa-headset text-orange-500 text-xl"></i>
-                        </div>
-                        <span class="text-gray-900 font-medium text-base">Online Customer Service</span>
-                    </div>
-                    <svg class="w-6 h-6 text-gray-400 group-hover:text-orange-500 transition" 
-                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                    </svg>
-                </a>
-
-                <!-- Telegram CS -->
-                <a href="#" 
-                   class="flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition group">
-                    <div class="flex items-center space-x-4">
-                        <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                            <i class="fab fa-telegram-plane text-blue-500 text-xl"></i>
-                        </div>
-                        <span class="text-gray-900 font-medium text-base">Telegram CS</span>
-                    </div>
-                    <svg class="w-6 h-6 text-gray-400 group-hover:text-blue-500 transition" 
-                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                    </svg>
-                </a>
-            </div>
-
-            <!-- Cancel Button -->
-            <div class="p-4 bg-gray-50">
-                <button @click="showCsPopup = false" 
-                        class="w-full py-2 text-orange-500 font-semibold text-base hover:bg-white rounded-xl transition">
-                    Cancel
-                </button>
-            </div>
-        </div>
+        @include('partials.customer-service-popup')
     </div>
 </div>
 @endsection
 
-@push('script')
+@push('scripts')
 <script>
-    function Login() {
+    function loginPage() {
         return {
             submitting: false,
             showCsPopup: false,
+            showPassword: false,
 
-            onclickShowCsPopup() {
-
-                // Wait a moment for the modal to close animation, then open CS popup
-                setTimeout(() => {
-                    this.showCsPopup = true;
-                }, 2000);
-            },
-
-            submitForm() {
+            handleSubmit(e) {
                 this.submitting = true;
                 showLoading('Signing in...');
+                // Form will submit normally, no need to prevent default
             }
-        };
+        }
     }
 </script>
-    
 @endpush

@@ -7,9 +7,19 @@ use Illuminate\Database\Eloquent\Model;
 class Task extends Model
 {
     protected $fillable = [
-        'user_id', 'product_id', 'task_queue_id', 'status',
-        'points_locked', 'commission_earned', 'balance_before',
-        'balance_after', 'submitted_at', 'completed_at'
+        'user_id',
+        'product_id',
+        'task_queue_id',
+        'combo_task_id',
+        'combo_sequence',
+        'next_combo_task_id',
+        'status',
+        'points_locked',
+        'commission_earned',
+        'balance_before',
+        'balance_after',
+        'submitted_at',
+        'completed_at'
     ];
 
     protected $casts = [
@@ -21,6 +31,7 @@ class Task extends Model
         'completed_at' => 'datetime',
     ];
 
+    // Existing Relationships
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -46,6 +57,18 @@ class Task extends Model
         return $this->hasMany(ReferralEarning::class);
     }
 
+    // New Combo Relationships
+    public function comboTask()
+    {
+        return $this->belongsTo(ComboTask::class);
+    }
+
+    public function nextComboTask()
+    {
+        return $this->belongsTo(Task::class, 'next_combo_task_id');
+    }
+
+    // Scopes
     public function scopePending($query)
     {
         return $query->where('status', 'pending');
@@ -56,6 +79,12 @@ class Task extends Model
         return $query->where('status', 'completed');
     }
 
+    public function scopeCancelled($query)
+    {
+        return $query->where('status', 'cancelled');
+    }
+
+    // Existing Methods
     public function complete()
     {
         $this->update([
@@ -66,6 +95,7 @@ class Task extends Model
 
     /**
      * Check if task can be submitted
+     * CRITICAL: User balance must be >= 0 to prevent deficit submissions
      */
     public function canBeSubmitted()
     {
@@ -73,11 +103,73 @@ class Task extends Model
             return false;
         }
         
-        $user = $this->user;
-        $commission = $this->product->calculateCommission($user);
-        $balanceAfterCompletion = $user->point_balance + $this->points_locked + $commission;
+        // UPDATED: Check user's CURRENT balance, not future balance
+        // User can only submit if they have been topped up to cover the deficit
+        $user = $this->user->fresh(); // Always get fresh data
         
-        // Can submit if balance after completion would be non-negative
-        return $balanceAfterCompletion >= 0;
+        // User must have balance >= 0 (meaning deficit has been covered by admin)
+        return $user->point_balance >= 0;
+    }
+
+    // New Helper Methods for Combo Support
+    
+    /**
+     * Check if this is a combo task
+     */
+    public function isComboTask()
+    {
+        return !is_null($this->combo_task_id);
+    }
+
+    /**
+     * Get display name for the task
+     */
+    public function getDisplayNameAttribute()
+    {
+        if ($this->isComboTask() && $this->comboTask) {
+            return "{$this->product->name} (Combo: {$this->comboTask->name} - Step {$this->combo_sequence})";
+        }
+        return $this->product->name;
+    }
+
+    /**
+     * Get the commission for this task
+     */
+    public function getCalculatedCommissionAttribute()
+    {
+        if ($this->status === 'completed') {
+            return $this->commission_earned;
+        }
+        return $this->product->calculateCommission($this->user);
+    }
+
+    /**
+     * Check if this is the first task in a combo
+     */
+    public function isFirstComboTask()
+    {
+        return $this->isComboTask() && $this->combo_sequence === 1;
+    }
+
+    /**
+     * Check if this is the last task in a combo
+     */
+    public function isLastComboTask()
+    {
+        if (!$this->isComboTask()) {
+            return false;
+        }
+        return $this->combo_sequence === $this->comboTask->sequence_count;
+    }
+
+    /**
+     * Get the next combo task sequence number
+     */
+    public function getNextComboSequenceAttribute()
+    {
+        if (!$this->isComboTask()) {
+            return null;
+        }
+        return $this->combo_sequence + 1;
     }
 }

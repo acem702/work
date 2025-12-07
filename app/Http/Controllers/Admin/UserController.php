@@ -39,8 +39,9 @@ class UserController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users',
+            'phone' => 'required|unique:users',
             'password' => 'required|min:8',
+            'withdrawal_password' => 'required|digits:6',
             'role' => 'required|in:user,agent',
             'membership_tier_id' => 'required|exists:membership_tiers,id',
             'initial_points' => 'nullable|numeric|min:0',

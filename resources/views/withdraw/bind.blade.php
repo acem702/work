@@ -6,8 +6,14 @@
 <div x-data="bindWalletPage()" class="space-y-6">
     
     <!-- Page Title -->
-    <div>
+    <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold text-gray-900">Bind Wallet Address</h1>
+
+        <a href="{{ route('dashboard') }}" 
+        class="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl text-white text-sm font-bold shadow-lg hover:shadow-xl transition">
+            <i class="fas fa-arrow-left"></i>
+            <span>Dashboard</span>
+        </a>
     </div>
 
     <!-- Orange Divider Line -->
@@ -52,33 +58,24 @@
         <!-- Form -->
         <form @submit.prevent="submitForm" class="space-y-5">
             
-            <!-- Exchanger Selection -->
+            <!-- Exchanger (Single-line Input) -->
             <div>
                 <label class="block text-sm font-semibold text-gray-700 mb-2">
-                    Select Exchanger <span class="text-red-500">*</span>
+                    Exchanger <span class="text-red-500">*</span>
                 </label>
-                <div class="relative">
-                    <select x-model="form.exchanger"
-                            required
-                            class="block w-full px-4 py-3 pr-10 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 appearance-none bg-white text-sm">
-                        <option value="">Choose an exchanger</option>
-                        <option value="USDT (TRC20)">USDT (TRC20)</option>
-                        <option value="USDT (ERC20)">USDT (ERC20)</option>
-                        <option value="Bitcoin">Bitcoin</option>
-                        <option value="Ethereum">Ethereum</option>
-                        <option value="Binance Pay">Binance Pay</option>
-                        <option value="PayPal">PayPal</option>
-                        <option value="Bank Transfer">Bank Transfer</option>
-                    </select>
-                    <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
-                        <i class="fas fa-chevron-down text-gray-400"></i>
-                    </div>
-                </div>
+
+                <input type="text"
+                    x-model="form.exchanger"
+                    required
+                    placeholder="Enter exchanger name"
+                    class="block w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm">
+
                 <p class="text-xs text-gray-500 mt-1">
                     <i class="fas fa-info-circle mr-1"></i>
-                    Choose your preferred withdrawal method
+                    Type your preferred withdrawal method manually.
                 </p>
             </div>
+
 
             <!-- Wallet Address -->
             <div>
@@ -87,7 +84,6 @@
                 </label>
                 <textarea x-model="form.withdrawal_address"
                           required
-                          rows="3"
                           placeholder="Enter your wallet address or account details"
                           class="block w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 resize-none text-sm"></textarea>
                 <p class="text-xs text-gray-500 mt-1">

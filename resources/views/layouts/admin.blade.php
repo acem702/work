@@ -81,11 +81,11 @@
                     <span class="ml-3">Membership Tiers</span>
                 </a>
 
-                <!-- Reports -->
-                <a href="#" 
-                   class="flex items-center px-4 py-3 text-gray-300 rounded-lg hover:bg-gray-800 hover:text-white transition">
-                    <i class="fas fa-file-chart-line w-5"></i>
-                    <span class="ml-3">Reports</span>
+                <!-- Pages -->
+                <a href="{{ route('admin.pages.index') }}" 
+                class="flex items-center px-4 py-3 text-gray-300 rounded-lg hover:bg-gray-800 hover:text-white transition {{ request()->routeIs('admin.pages.*') ? 'bg-gray-800 text-white' : '' }}">
+                    <i class="fas fa-file-alt w-5"></i>
+                    <span class="ml-3">CMS Pages</span>
                 </a>
 
                 <!-- Settings -->

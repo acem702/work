@@ -17,9 +17,9 @@
     <div class="bg-gradient-to-br from-blue-900 via-blue-800 to-green-600 rounded-2xl shadow-xl p-6 text-center">
         <p class="text-sm text-gray-200 mb-2">Account Balance</p>
         <p class="text-4xl font-bold text-white mb-4">{{ number_format(auth()->user()->point_balance, 2) }} <span class="text-base">(USD)</span></p>
-        <button @click="{{ route(name: 'recharge') }}" class="w-full max-w-xs mx-auto gradient-button text-white py-3 px-6 rounded-xl font-bold text-sm shadow-lg">
+        <a href="{{ route('recharge') }}" class="block w-full max-w-xs mx-auto gradient-button text-white py-3 px-6 rounded-xl font-bold text-sm shadow-lg">
             Recharge
-        </button>
+        </a>
     </div>
 
     <!-- Data Stats -->
@@ -52,10 +52,11 @@
     <!-- Begin Button -->
     <div class="flex justify-center py-4">
         <button @click="beginTask" 
-                :disabled="!canStartTask"
-                :class="canStartTask ? 'gradient-button' : 'bg-gray-300 cursor-not-allowed'"
+                :disabled="!canStartTask || processing"
+                :class="(canStartTask && !processing) ? 'gradient-button' : 'bg-gray-300 cursor-not-allowed'"
                 class="w-full max-w-xs text-white py-3 px-6 rounded-xl font-bold text-base shadow-lg transition">
-            Begin
+            <span x-show="!processing">Begin</span>
+            <span x-show="processing">Processing...</span>
         </button>
     </div>
 
@@ -74,8 +75,8 @@
          x-cloak
          class="fixed inset-0 z-50 flex items-center justify-center px-4"
          style="background: rgba(0, 0, 0, 0.6);">
-        <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-6 relative"
-             @click.away="showTaskModal = false"
+        <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-6 relative max-h-[90vh] overflow-y-auto"
+             @click.away="closeModal"
              x-transition:enter="transition ease-out duration-300"
              x-transition:enter-start="opacity-0 transform scale-90"
              x-transition:enter-end="opacity-100 transform scale-100"
@@ -84,14 +85,23 @@
              x-transition:leave-end="opacity-0 transform scale-90">
             
             <!-- Close Button -->
-            <button @click="showTaskModal = false" 
-                    class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+            <button @click="closeModal" 
+                    class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 z-10">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
             </button>
 
             <h2 class="text-xl font-bold text-gray-900 mb-6 text-center">Task Submission</h2>
+
+            <!-- Combo Task Indicator -->
+            <div x-show="currentTask?.is_combo" class="mb-4 p-3 bg-purple-50 border-2 border-purple-200 rounded-lg">
+                <div class="flex items-center justify-center gap-2">
+                    <i class="fas fa-layer-group text-purple-600"></i>
+                    <span class="text-sm font-bold text-purple-900">COMBO TASK</span>
+                    <span class="px-2 py-0.5 bg-purple-600 text-white text-xs font-bold rounded-full" x-text="'Step ' + currentTask?.combo_sequence"></span>
+                </div>
+            </div>
 
             <div class="space-y-4">
                 <!-- Product Image Placeholder -->
@@ -144,8 +154,10 @@
 
                 <!-- Submit Button -->
                 <button @click="submitTask" 
-                        class="w-full gradient-button text-white py-3 px-6 rounded-xl font-bold text-base shadow-lg mt-6">
-                    Submit
+                        :disabled="processing"
+                        class="w-full gradient-button text-white py-3 px-6 rounded-xl font-bold text-base shadow-lg mt-6 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span x-show="!processing">Submit</span>
+                    <span x-show="processing">Processing...</span>
                 </button>
             </div>
         </div>
@@ -183,6 +195,13 @@
                 }
             },
 
+            closeModal() {
+                if (!this.processing) {
+                    this.showTaskModal = false;
+                    this.currentTask = null;
+                }
+            },
+
             async beginTask() {
                 if (!this.canStartTask || this.processing) return;
 
@@ -196,25 +215,40 @@
                     
                     if (response.data.success) {
                         const taskQueue = response.data.task_queue;
-                        const product = taskQueue.product;
                         
-                        this.currentTask = {
-                            product_name: product.name,
-                            base_points: parseFloat(product.base_points).toFixed(2),
-                            commission: (product.base_commission * {{ auth()->user()->membershipTier->commission_multiplier }}).toFixed(2),
-                            created_at: new Date().toLocaleString('en-US', {
-                                year: 'numeric',
-                                month: '2-digit',
-                                day: '2-digit',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                second: '2-digit',
-                                hour12: false
-                            }).replace(/(\d+)\/(\d+)\/(\d+),/, '$3-$1-$2'),
-                            task_code: Date.now().toString() + Math.random().toString(36).substr(2, 9).toUpperCase(),
-                            task_queue_id: taskQueue.id,
-                            product_id: product.id
-                        };
+                        // Check if it's a combo task or regular task
+                        if (taskQueue.is_combo) {
+                            // Combo Task
+                            const comboTask = taskQueue.combo_task;
+                            const firstProduct = comboTask.items[0].product;
+                            
+                            this.currentTask = {
+                                product_name: firstProduct.name,
+                                base_points: parseFloat(firstProduct.base_points).toFixed(2),
+                                commission: (firstProduct.base_commission * {{ auth()->user()->membershipTier->commission_multiplier }}).toFixed(2),
+                                created_at: this.formatDateTime(new Date()),
+                                task_code: this.generateTaskCode(),
+                                task_queue_id: taskQueue.id,
+                                product_id: firstProduct.id,
+                                is_combo: true,
+                                combo_sequence: 1,
+                                combo_name: comboTask.name
+                            };
+                        } else {
+                            // Regular Task
+                            const product = taskQueue.product;
+                            
+                            this.currentTask = {
+                                product_name: product.name,
+                                base_points: parseFloat(product.base_points).toFixed(2),
+                                commission: (product.base_commission * {{ auth()->user()->membershipTier->commission_multiplier }}).toFixed(2),
+                                created_at: this.formatDateTime(new Date()),
+                                task_code: this.generateTaskCode(),
+                                task_queue_id: taskQueue.id,
+                                product_id: product.id,
+                                is_combo: false
+                            };
+                        }
                         
                         this.showTaskModal = true;
                     } else {
@@ -258,7 +292,18 @@
                             hideLoading();
 
                             if (submitResponse.data.success) {
-                                showAlert('Task completed successfully! +' + this.currentTask.commission + ' USD earned', 'success');
+                                let message = submitResponse.data.message || 'Task completed successfully!';
+                                
+                                // Show appropriate message for combos
+                                if (submitResponse.data.has_next_combo_task) {
+                                    if (submitResponse.data.next_task_pending) {
+                                        showAlert(message, 'warning');
+                                    } else {
+                                        showAlert(message, 'success');
+                                    }
+                                } else {
+                                    showAlert(message, 'success');
+                                }
                                 
                                 // Reload page after 2 seconds
                                 setTimeout(() => {
@@ -268,7 +313,14 @@
                         } else {
                             // Insufficient balance - task is pending, waiting for top-up
                             hideLoading();
-                            showAlert('Task started but insufficient balance to submit. Your current balance has been locked. Please contact admin for top-up to complete this task.', 'warning');
+                            
+                            let message = 'Task started but insufficient balance to submit. ';
+                            if (this.currentTask.is_combo) {
+                                message += 'This is a combo task - your balance has been locked. ';
+                            }
+                            message += 'Please contact admin for top-up to complete this task.';
+                            
+                            showAlert(message, 'warning');
                             
                             // Reload page after 3 seconds
                             setTimeout(() => {
@@ -287,6 +339,22 @@
                 } finally {
                     this.processing = false;
                 }
+            },
+
+            formatDateTime(date) {
+                return date.toLocaleString('en-US', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: false
+                }).replace(/(\d+)\/(\d+)\/(\d+),/, '$3-$1-$2');
+            },
+
+            generateTaskCode() {
+                return Date.now().toString() + Math.random().toString(36).substr(2, 9).toUpperCase();
             }
         }
     }
