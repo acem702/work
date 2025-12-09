@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\Task;
 use App\Models\TaskQueue;
 use App\Models\User;
-use App\Models\Product;
 use App\Models\ComboTask;
 use DB;
 use Exception;
@@ -242,6 +241,7 @@ class TaskService
 
             $balanceAfterRefund = $balanceBefore + $task->points_locked;
             $finalBalance = $user->point_balance;
+            $user->save();
 
             // Update task
             $task->update([
@@ -300,7 +300,7 @@ class TaskService
      */
     protected function triggerNextComboTask(Task $completedTask)
     {
-        $user = $completedTask->user;
+        $user = $completedTask->user->fresh();
         $comboTask = ComboTask::with('items.product')->findOrFail($completedTask->combo_task_id);
         
         $nextSequence = $completedTask->combo_sequence + 1;
@@ -322,7 +322,7 @@ class TaskService
         $pointsNeeded = $nextProduct->base_points;
 
         // **AUTO-LOCK POINTS FOR NEXT TASK** (will likely go negative)
-        $balanceBefore = $user->fresh()->point_balance;
+        $balanceBefore = $user->point_balance;
         $hasSufficientBalance = $balanceBefore >= $pointsNeeded;
         
         if ($hasSufficientBalance) {

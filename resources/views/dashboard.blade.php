@@ -39,7 +39,7 @@
     <!-- Frozen Amount -->
     <div class="border-t-2 border-orange-500 pt-4">
         <div class="text-center">
-            <p class="text-4xl font-bold text-gray-900 mb-2">0</p>
+            <p class="text-4xl font-bold text-gray-900 mb-2">{{ number_format(auth()->user()->tasks()->where('status','pending')->sum('points_locked')) }}</p>
             <p class="text-sm text-gray-600">Frozen Amount (USD)</p>
         </div>
     </div>

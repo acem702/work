@@ -201,14 +201,14 @@
                     <div class="flex items-center space-x-3">
                         <!-- Desktop Account Menu -->
                         <div class="hidden lg:flex items-center space-x-4 text-sm">
-                            <a href="{{ route(name: 'account.index') }}" class="text-gray-600 hover:text-gray-900 font-medium {{ request()->routeIs('dashboard') ? 'text-gray-900' : '' }}">
-                                <i class="fas fa-user mr-1"></i> MY ACCOUNT
-                            </a>
                             <a href="{{ route('dashboard') }}" class="text-gray-600 hover:text-gray-900 font-medium {{ request()->routeIs('tasks.*') ? 'text-gray-900' : '' }}">
                                 DASHBOARD
                             </a>
                             <a href="{{ route('membership.index') }}" class="text-gray-600 hover:text-gray-900 font-medium {{ request()->routeIs('membership.*') ? 'text-gray-900' : '' }}">
                                 MEMBERSHIP
+                            </a>
+                            <a href="{{ route(name: 'account.index') }}" class="text-gray-600 hover:text-gray-900 font-medium {{ request()->routeIs('dashboard') ? 'text-gray-900' : '' }}">
+                                <i class="fas fa-user mr-1"></i>
                             </a>
                         </div>
 

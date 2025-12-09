@@ -21,7 +21,7 @@
 
     <!-- Page Content -->
     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
-        <article class="prose prose-lg max-w-none">
+        <article class="prose max-w-none prose-headings:!text-black prose-a:!text-blue-600 prose-a:!underline prose-li:!list-disc">
             {!! $page->content !!}
         </article>
     </div>

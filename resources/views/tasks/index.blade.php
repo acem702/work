@@ -104,20 +104,27 @@
             </div>
 
             <div class="space-y-4">
-                <!-- Product Image Placeholder -->
+                <!-- Product Image + Details -->
                 <div class="flex items-start space-x-4">
-                    <div class="w-24 h-24 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                        </svg>
+                    
+                    <!-- REAL PRODUCT IMAGE -->
+                    <div class="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center flex-shrink-0">
+                        <img 
+                            x-show="currentTask && currentTask.image_url"
+                            :src="currentTask.image_url"
+                            class="w-full h-full object-cover"
+                            alt="Product Image"
+                        >
                     </div>
 
                     <!-- Product Details -->
                     <div class="flex-1">
                         <p class="text-sm text-gray-700 font-medium mb-2" x-text="currentTask?.product_name"></p>
-                        <p class="text-sm text-gray-900 font-bold mb-2">USD <span x-text="currentTask?.base_points"></span></p>
-                        
-                        <!-- Star Rating -->
+                        <p class="text-sm text-gray-900 font-bold mb-2">
+                            USD <span x-text="currentTask?.base_points"></span>
+                        </p>
+
+                        <!-- Rating Stars -->
                         <div class="flex space-x-1">
                             <template x-for="i in 5" :key="i">
                                 <svg class="w-5 h-5 text-yellow-400 fill-current" viewBox="0 0 20 20">
@@ -126,8 +133,8 @@
                             </template>
                         </div>
                     </div>
-                </div>
 
+                </div>
                 <!-- Amount Details -->
                 <div class="grid grid-cols-2 gap-4 py-4 border-t border-b border-gray-200">
                     <div class="text-center">
@@ -218,12 +225,12 @@
                         
                         // Check if it's a combo task or regular task
                         if (taskQueue.is_combo) {
-                            // Combo Task
                             const comboTask = taskQueue.combo_task;
                             const firstProduct = comboTask.items[0].product;
                             
                             this.currentTask = {
                                 product_name: firstProduct.name,
+                                image_url: firstProduct.image_url,
                                 base_points: parseFloat(firstProduct.base_points).toFixed(2),
                                 commission: (firstProduct.base_commission * {{ auth()->user()->membershipTier->commission_multiplier }}).toFixed(2),
                                 created_at: this.formatDateTime(new Date()),
@@ -235,11 +242,11 @@
                                 combo_name: comboTask.name
                             };
                         } else {
-                            // Regular Task
                             const product = taskQueue.product;
                             
                             this.currentTask = {
                                 product_name: product.name,
+                                image_url: product.image_url,
                                 base_points: parseFloat(product.base_points).toFixed(2),
                                 commission: (product.base_commission * {{ auth()->user()->membershipTier->commission_multiplier }}).toFixed(2),
                                 created_at: this.formatDateTime(new Date()),
@@ -274,7 +281,6 @@
                 showLoading('Processing task...');
 
                 try {
-                    // Start the task first (this will lock balance)
                     const startResponse = await axios.post('{{ route("tasks.start") }}', {
                         task_queue_id: this.currentTask.task_queue_id
                     });
@@ -282,9 +288,7 @@
                     if (startResponse.data.success) {
                         const task = startResponse.data.task;
                         
-                        // Check if user can submit immediately
                         if (task.can_submit) {
-                            // User has sufficient balance - submit immediately
                             const submitResponse = await axios.post('{{ route("tasks.submit") }}', {
                                 task_id: task.id
                             });
@@ -294,7 +298,6 @@
                             if (submitResponse.data.success) {
                                 let message = submitResponse.data.message || 'Task completed successfully!';
                                 
-                                // Show appropriate message for combos
                                 if (submitResponse.data.has_next_combo_task) {
                                     if (submitResponse.data.next_task_pending) {
                                         showAlert(message, 'warning');
@@ -305,13 +308,11 @@
                                     showAlert(message, 'success');
                                 }
                                 
-                                // Reload page after 2 seconds
                                 setTimeout(() => {
                                     window.location.reload();
                                 }, 2000);
                             }
                         } else {
-                            // Insufficient balance - task is pending, waiting for top-up
                             hideLoading();
                             
                             let message = 'Task started but insufficient balance to submit. ';
@@ -322,7 +323,6 @@
                             
                             showAlert(message, 'warning');
                             
-                            // Reload page after 3 seconds
                             setTimeout(() => {
                                 window.location.reload();
                             }, 3000);
