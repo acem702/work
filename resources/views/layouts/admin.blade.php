@@ -88,11 +88,16 @@
                     <span class="ml-3">CMS Pages</span>
                 </a>
 
-                <!-- Settings -->
-                <a href="#" 
-                   class="flex items-center px-4 py-3 text-gray-300 rounded-lg hover:bg-gray-800 hover:text-white transition">
-                    <i class="fas fa-cog w-5"></i>
-                    <span class="ml-3">Settings</span>
+                <!-- Withdrawals -->
+                <a href="{{ route('admin.withdrawals.index') }}" 
+                class="flex items-center px-4 py-3 text-gray-300 rounded-lg hover:bg-gray-800 hover:text-white transition {{ request()->routeIs('admin.withdrawals.*') ? 'bg-gray-800 text-white' : '' }}">
+                    <i class="fas fa-money-bill-wave w-5"></i>
+                    <span class="ml-3">Withdrawals</span>
+                    @if($pendingCount = \App\Models\Withdrawal::where('status', 'pending')->count())
+                        <span class="ml-auto bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                            {{ $pendingCount }}
+                        </span>
+                    @endif
                 </a>
 
             </nav>

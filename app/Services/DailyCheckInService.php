@@ -120,7 +120,7 @@ class DailyCheckInService
             // Record transaction
             $this->transactionService->recordTransaction(
                 user: $user,
-                type: 'daily_check_in',
+                type: 'task_commission',
                 amount: $rewardAmount,
                 balanceBefore: $balanceBefore,
                 balanceAfter: $user->point_balance,

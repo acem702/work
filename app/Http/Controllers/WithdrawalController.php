@@ -65,6 +65,18 @@ class WithdrawalController extends Controller
             ], 422);
         }
 
+        // Check if user has credibility score to withdraw
+        if ($user->cp < 80) {
+            Log::warning('Insufficient credibility score', [
+                'user_id' => $user->id,
+                'credibility_score' => $user->cp
+            ]);
+            return response()->json([
+                'success' => false,
+                'errors' => ['amount' => ['Insufficient credibility score. Your current credibility score is ' . $user->cp . '. Please contact customer service.']]
+            ], status: 422);
+        }
+
         // Check for pending withdrawals
         $pendingWithdrawals = Withdrawal::where('user_id', $user->id)
             ->where('status', 'pending')

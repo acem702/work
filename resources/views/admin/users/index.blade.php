@@ -66,6 +66,7 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Membership</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Balance</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CP</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
                         <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -103,6 +104,10 @@
                                 <div class="text-xs text-gray-500">points</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-semibold text-gray-900">{{ number_format($user->cp, 2) }}</div>
+                                <div class="text-xs text-gray-500">%</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="px-2 py-1 text-xs font-semibold rounded-full {{ status_badge_color($user->status) }}">
                                     {{ ucfirst($user->status) }}
                                 </span>
@@ -123,6 +128,15 @@
                                     <button onclick="openStatusModal({{ $user->id }}, '{{ $user->name }}', '{{ $user->status }}')" 
                                             class="text-yellow-600 hover:text-yellow-900" title="Change Status">
                                         <i class="fas fa-toggle-on"></i>
+                                    </button>
+                                    <button onclick="openCredModal({{ $user->id }}, '{{ $user->name }}', {{ $user->cp }})" 
+                                            class="text-green-600 hover:text-green-900" title="Credibility">
+                                        <i class="fas fa-percent"></i>
+                                    </button>
+                                    <button onclick="openResetPassModal({{ $user->id }}, '{{ $user->name }}')"
+                                            class="text-red-600 hover:text-red-800"
+                                            title="Reset Passwords">
+                                        <i class="fas fa-key"></i>
                                     </button>
                                 </div>
                             </td>
@@ -272,6 +286,43 @@
     </form>
 </div>
 </dialog>
+<!-- Cred Modal -->
+<dialog id="credModal" class="rounded-xl shadow-2xl backdrop:bg-black backdrop:bg-opacity-50 w-full max-w-md">
+    <div class="p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-bold text-gray-900">Credibility</h2>
+            <button onclick="this.closest('dialog').close()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="credForm" class="space-y-4">
+        @csrf
+        <input type="hidden" id="credUserId" name="user_id">
+        
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+            <p class="text-sm text-gray-700">User: <span id="credUserName" class="font-semibold"></span></p>
+            <p class="text-sm text-gray-700">Credibility: <span id="credPoint" class="font-semibold"></span> %</p>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">CP</label>
+            <input type="number" name="cp" required min="0.01" step="0.01"
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+        </div>
+
+        <div class="flex justify-end space-x-3 pt-4">
+            <button type="button" onclick="this.closest('dialog').close()"
+                    class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
+                Cancel
+            </button>
+            <button type="submit"
+                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                Update
+            </button>
+        </div>
+    </form>
+</div>
+</dialog>
 <!-- Status Change Modal -->
 <dialog id="statusModal" class="rounded-xl shadow-2xl backdrop:bg-black backdrop:bg-opacity-50 w-full max-w-md">
     <div class="p-6">
@@ -313,6 +364,51 @@
     </form>
 </div>
 </dialog>
+<!-- Reset Password Modal -->
+<dialog id="resetPassModal"
+        class="rounded-xl shadow-2xl backdrop:bg-black backdrop:bg-opacity-50 w-full max-w-md">
+    <div class="p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-bold text-red-600">Reset User Passwords</h2>
+            <button onclick="this.closest('dialog').close()"
+                    class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+            <p class="text-sm text-gray-700">
+                User: <span id="resetUserName" class="font-semibold"></span>
+            </p>
+            <p class="text-sm text-red-700 mt-2">
+                ⚠️ This will reset:
+            </p>
+            <ul class="text-sm text-gray-700 list-disc pl-5 mt-1">
+                <li>Login password → <strong>123456789</strong></li>
+                <li>Withdrawal password → <strong>123456</strong></li>
+            </ul>
+            <p class="text-xs text-red-600 mt-3">
+                User must contact admin to regain access.
+            </p>
+        </div>
+
+        <input type="hidden" id="resetUserId">
+
+        <div class="flex justify-end space-x-3 pt-4">
+            <button type="button"
+                    onclick="this.closest('dialog').close()"
+                    class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                Cancel
+            </button>
+            <button type="button"
+                    onclick="confirmResetPasswords()"
+                    class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                Reset Passwords
+            </button>
+        </div>
+    </div>
+</dialog>
+
 @endsection
 @push('scripts')
 <script>
@@ -354,6 +450,29 @@
         }
     });
 
+    // Cred Modal Functions
+    function openCredModal(userId, userName, cp) {
+        document.getElementById('credUserId').value = userId;
+        document.getElementById('credUserName').textContent = userName;
+        document.getElementById('credPoint').textContent = parseFloat(cp).toFixed(2);
+        document.getElementById('credModal').showModal();
+    }
+
+    document.getElementById('credForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const userId = document.getElementById('credUserId').value;
+        const formData = new FormData(e.target);
+        
+        try {
+            const response = await axios.post(`/admin/users/${userId}/cp`, formData);
+            if (response.data.success) {
+                location.reload();
+            }
+        } catch (error) {
+            alert(error.response?.data?.message || 'Error Updating');
+        }
+    });
+
     // Status Change Modal Functions
     function openStatusModal(userId, userName, currentStatus) {
         document.getElementById('statusUserId').value = userId;
@@ -376,5 +495,26 @@
             alert(error.response?.data?.message || 'Error updating status');
         }
     });
+    
+    //Reset Passwords
+    function openResetPassModal(userId, userName) {
+        document.getElementById('resetUserId').value = userId;
+        document.getElementById('resetUserName').textContent = userName;
+        document.getElementById('resetPassModal').showModal();
+    }
+
+    async function confirmResetPasswords() {
+        const userId = document.getElementById('resetUserId').value;
+
+        try {
+            const response = await axios.post(`/admin/users/${userId}/reset-passwords`);
+
+            if (response.data.success) {
+                location.reload();
+            }
+        } catch (error) {
+            alert(error.response?.data?.message || 'Failed to reset passwords');
+        }
+    }
 </script>
 @endpush

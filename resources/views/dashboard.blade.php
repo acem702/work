@@ -55,28 +55,99 @@
     <!-- Registered Working Days Section -->
     <div class="bg-gray-50 rounded-2xl p-5">
         <div class="flex items-center justify-between mb-4">
-            <h2 class="text-base font-bold text-orange-500">Registered working days</h2>
-            <button class="px-4 py-2 bg-gray-400 text-white rounded-full text-xs font-medium">
-                Sign in immediately ({{ auth()->user()->tasks_completed_today }}/{{ auth()->user()->membershipTier->daily_task_limit }})
-            </button>
+            <h2 class="text-base font-bold text-orange-500">Daily Working-day Rewards</h2>
+            
+            @php
+                $hasCompletedTasks = auth()->user()->tasks_completed_today >= auth()->user()->membershipTier->daily_task_limit;
+                $canCheckIn = $streakStatus['can_check_in'] && $hasCompletedTasks;
+            @endphp
+
+            @if($canCheckIn)
+                <form action="{{ route('check-in.claim') }}" method="POST" class="inline">
+                    @csrf
+                    <button type="submit" class="px-4 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-full text-xs font-medium hover:from-orange-600 hover:to-orange-700 shadow-lg transform hover:scale-105 transition-all duration-200">
+                        <i class="fas fa-gift mr-1"></i>
+                        Claim Reward (${{ $streakStatus['next_reward'] }})
+                    </button>
+                </form>
+            @elseif(!$hasCompletedTasks)
+                <button disabled class="px-4 py-2 bg-gray-400 text-white rounded-full text-xs font-medium cursor-not-allowed opacity-60">
+                    <i class="fas fa-lock mr-1"></i>
+                    Complete {{ auth()->user()->membershipTier->daily_task_limit }} tasks first ({{ auth()->user()->tasks_completed_today }}/{{ auth()->user()->membershipTier->daily_task_limit }})
+                </button>
+            @else
+                <button disabled class="px-4 py-2 bg-gray-500 text-white rounded-full text-xs font-medium cursor-not-allowed">
+                    <i class="fas fa-check-circle mr-1"></i>
+                    Already Claimed Today
+                </button>
+            @endif
+        </div>
+
+        <!-- Streak Info -->
+        <div class="mb-4 bg-white rounded-lg p-3 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-fire text-orange-500 text-lg"></i>
+                <span class="text-sm font-semibold text-gray-700">Current Streak:</span>
+                <span class="text-sm font-bold text-orange-500">{{ $streakStatus['current_streak'] }} days</span>
+            </div>
+            <div class="text-right">
+                <p class="text-xs text-gray-500">Total Check-ins</p>
+                <p class="text-sm font-bold text-gray-700">{{ $streakStatus['total_check_ins'] }}</p>
+            </div>
         </div>
 
         <!-- Days Cards -->
         <div class="flex overflow-x-auto space-x-3 pb-2">
-            @for($i = 1; $i <= 7; $i++)
-                <div class="flex-shrink-0 w-40 bg-white rounded-xl border-2 border-orange-500 overflow-hidden">
-                    <div class="bg-white p-4 flex items-center justify-center">
-                        <svg class="w-12 h-12 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
+            @foreach($weekCalendar as $day)
+                @php
+                    $isCheckedIn = $day['checked_in'];
+                    $isToday = $day['is_today'];
+                    $isPast = $day['is_past'];
+                    $isFuture = $day['is_future'];
+                    $reward = \App\Models\DailyCheckIn::getRewardForDay($day['streak_day']);
+                @endphp
+
+                <div class="flex-shrink-0 w-40 bg-white rounded-xl border-2 overflow-hidden
+                    {{ $isCheckedIn ? 'border-green-500' : ($isToday ? 'border-orange-500 shadow-lg' : 'border-gray-300') }}">
+                    
+                    <!-- Card Content -->
+                    <div class="bg-white p-4 flex flex-col items-center justify-center">
+                        @if($isCheckedIn)
+                            <!-- Checked In -->
+                            <svg class="w-12 h-12 text-green-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <p class="text-xs text-green-600 font-semibold">Claimed</p>
+                            <p class="text-sm font-bold text-gray-700">${{ number_format($day['reward'], 0) }}</p>
+                        @elseif($isToday)
+                            <!-- Today - Can Claim -->
+                            <i class="fas fa-gift text-orange-500 text-3xl mb-2"></i>
+                            <p class="text-xs text-orange-600 font-semibold">Today</p>
+                            <p class="text-sm font-bold text-gray-700">${{ number_format($reward, 0) }}</p>
+                        @elseif($isPast)
+                            <!-- Missed Day -->
+                            <svg class="w-12 h-12 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                    d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                            <p class="text-xs text-gray-400 font-semibold">Missed</p>
+                            <p class="text-sm font-bold text-gray-400">${{ number_format($reward, 0) }}</p>
+                        @else
+                            <!-- Future Day -->
+                            <i class="fas fa-lock text-gray-400 text-3xl mb-2"></i>
+                            <p class="text-xs text-gray-500 font-semibold">Locked</p>
+                            <p class="text-sm font-bold text-gray-600">${{ number_format($reward, 0) }}</p>
+                        @endif
                     </div>
-                    <div class="bg-orange-500 py-2 text-center flex items-center justify-center space-x-2">
-                        <i class="fas fa-lock text-white text-xs"></i>
-                        <span class="text-white text-xs font-bold">DAY {{ $i }}</span>
+
+                    <!-- Footer -->
+                    <div class="py-2 text-center
+                        {{ $isCheckedIn ? 'bg-green-500' : ($isToday ? 'bg-orange-500' : 'bg-gray-400') }}">
+                        <span class="text-white text-xs font-bold">{{ strtoupper($day['day_name']) }}</span>
                     </div>
                 </div>
-            @endfor
+            @endforeach
         </div>
     </div>
 

@@ -56,8 +56,9 @@ class UserController extends Controller
 
             $user = User::create([
                 'name' => $request->name,
-                'email' => $request->email,
+                'phone' => $request->phone,
                 'password' => Hash::make($request->password),
+                'withdrawal_password' => Hash::make($request->withdrawal_password),
                 'role' => $request->role,
                 'membership_tier_id' => $request->membership_tier_id,
                 'point_balance' => $request->initial_points ?? 0,
@@ -127,6 +128,50 @@ class UserController extends Controller
             'success' => true,
             'message' => 'User status updated',
         ]);
+    }
+
+    /**
+     * Update user credi
+     */
+    public function updateCred(Request $request, $userId)
+    {
+        $request->validate([
+            'cp' => 'required',
+        ]);
+
+        $user = User::findOrFail($userId);
+        $user->update(['cp' => $request->cp]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'User Credibility updated',
+        ]);
+    }
+
+    /**
+     * Password Reset
+     */
+    public function resetPasswords($userId)
+    {
+        try {
+            $user = User::findOrFail($userId);
+            $admin = auth()->user();
+
+            $user->update([
+                'password' => Hash::make('123456789'),
+                'withdrawal_password' => Hash::make('123456'),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'User login and withdrawal passwords have been reset',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 400);
+        }
     }
 
     /**

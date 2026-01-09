@@ -15,6 +15,7 @@ use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\ReferralController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WithdrawalController;
+use App\Http\Controllers\DailyCheckInController;
 
 // Redirect root to login
 Route::get('/', function () {
@@ -40,11 +41,17 @@ Route::middleware(['auth'])->group(function () {
             return redirect()->route('admin.dashboard');
         }
         
-        return view('dashboard');
+        // Get check-in data
+        $checkInService = app(\App\Services\DailyCheckInService::class);
+        $streakStatus = $checkInService->getStreakStatus($user);
+        $weekCalendar = $checkInService->getWeekCalendar($user);
+        
+        return view('dashboard', compact('streakStatus', 'weekCalendar'));
     })->name('dashboard');
 
     Route::get('/account', [UserController::class,'index'])->name('account');
     Route::get('/recharge', [UserController::class,'recharge'])->name('recharge');
+    Route::post('/check-in/claim', [DailyCheckInController::class, 'claim'])->name('check-in.claim');
 
     Route::get('/api/tasks/stats', [TaskController::class, 'stats'])->name('api.tasks.stats');
 
@@ -108,10 +115,19 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::resource('users', AdminUserController::class);
     Route::post('users/{user}/topup', [AdminUserController::class, 'topUp'])->name('users.topup');
     Route::post('users/{user}/status', [AdminUserController::class, 'updateStatus'])->name('users.status');
+    Route::post('users/{user}/cp', [AdminUserController::class, 'updateCred'])->name('users.cp');
+    Route::post('users/{user}/reset-passwords', [AdminUserController::class, 'resetPasswords'])->name('users.reset-passwords');
 
     // Products management
     Route::resource('products', AdminProductController::class);
     Route::resource('pages', AdminPageController::class);
+
+    // Withdrawals Management
+    Route::prefix('withdrawals')->name('withdrawals.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\WithdrawalController::class, 'index'])->name('index');
+        Route::post('/{withdrawal}/approve', [App\Http\Controllers\Admin\WithdrawalController::class, 'approve'])->name('approve');
+        Route::post('/{withdrawal}/reject', [App\Http\Controllers\Admin\WithdrawalController::class, 'reject'])->name('reject');
+    });
 
     Route::prefix('combo-tasks')->name('combo-tasks.')->group(function () {
         Route::get('/', [App\Http\Controllers\Admin\ComboTaskController::class, 'index'])->name('index');
